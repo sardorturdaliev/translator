@@ -13,4 +13,7 @@ interface AppRepository {
 
     fun getAllWords() : LiveData<List<SavedWords>>
 
+    fun deleteAll()
+
+
 }

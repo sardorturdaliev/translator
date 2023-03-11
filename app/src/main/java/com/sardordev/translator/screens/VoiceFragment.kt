@@ -1,9 +1,9 @@
 package com.sardordev.translator.screens
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import android.app.Activity.RESULT_OK
+import android.content.*
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -17,16 +17,16 @@ import com.sardordev.translator.R
 import com.sardordev.translator.data.entity.SavedWords
 import com.sardordev.translator.data.model.BodyTranslate
 import com.sardordev.translator.data.model.ResultTranslated
-import com.sardordev.translator.databinding.FragmentTranslateBinding
+import com.sardordev.translator.databinding.FragmentVoiceBinding
 import com.sardordev.translator.utils.UiEvent
-import com.sardordev.translator.viewmodel.TranslateWordViewModel
+import com.sardordev.translator.viewmodel.VoiceViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 
 @AndroidEntryPoint
-class TranslateFragment : Fragment() {
-    private val binding by lazy { FragmentTranslateBinding.inflate(layoutInflater) }
-    private val viewModel by viewModels<TranslateWordViewModel>()
+class VoiceFragment : Fragment() {
+    private val binding by lazy { FragmentVoiceBinding.inflate(layoutInflater) }
+    private val viewModel by viewModels<VoiceViewModel>()
     private var dan = "ru"
     private var gacha = "uz"
     override fun onCreateView(
@@ -34,38 +34,44 @@ class TranslateFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-
-        translateWord()
-        translatedWordObserver()
-
-        changeLanguage()
-        iconfunctions()
-
-        return binding.root
-    }
-
-    private fun translateWord() {
-
-
         binding.btntranslate.setOnClickListener {
-            var result = "ru"
-            if (binding.tvrussian.text.contains("Russian")) result = "ru"
-            if (binding.tvuzb.text.contains("Uzbek")) result = "uz"
-            if (binding.edSentences.text.isNotEmpty()) {
-                viewModel.transaleteWord(
-                    BodyTranslate(
-                        "$dan", arrayListOf(binding.edSentences.text.toString()),
-                        arrayListOf("$gacha")
-                    )
-                )
-            } else {
-                Toast.makeText(requireContext(), "Please Enter", Toast.LENGTH_SHORT).show()
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            try {
+                startActivityForResult(intent, 1)
+            } catch (a: ActivityNotFoundException) {
+                Toast.makeText(requireContext(), "Something with Wrong", Toast.LENGTH_SHORT).show()
             }
         }
 
 
+        translatedWordObserver()
+        iconfunctions()
+        changeLanguage()
+
+
+        return binding.root
     }
 
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            1 -> {
+                if (resultCode == RESULT_OK) {
+                    val result: ArrayList<String> =
+                        data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)!!
+                    binding.edSentences.setText(result[0])
+                    viewModel.transaleteWord(
+                        BodyTranslate(
+                            "$dan",
+                            arrayListOf(binding.edSentences.text.toString()),
+                            arrayListOf("$gacha")
+                        )
+                    )
+                }
+            }
+        }
+    }
 
     private fun translatedWordObserver() {
         lifecycleScope.launchWhenCreated {
@@ -82,54 +88,15 @@ class TranslateFragment : Fragment() {
                         binding.progressbar.isVisible = false
                         val itlist = it.data as List<ResultTranslated>
                         binding.tvResultTranslate.text = itlist[0].texts
-                        viewModel.insertData(
-                            SavedWords(
-                                0,
-                                binding.tvrussian.text.toString(),
-                                binding.tvuzb.text.toString(),
-                                binding.edSentences.text.toString(),
-                                binding.tvResultTranslate.text.toString()
-                            )
-                        )
                     }
                 }
             }
         }
     }
 
-
-    private fun changeLanguage() {
-        var ischange = false
-        binding.imgchange.setOnClickListener {
-            if (ischange) {
-                binding.imguzb.setImageResource(R.drawable.uzb)
-                binding.tvuzb.setText("Uzbek")
-
-                binding.imgrussian.setImageResource(R.drawable.rus)
-                binding.tvrussian.setText("Russian")
-                binding.tvappbar.text = "Russian to Uzbek"
-                dan = "ru"
-                gacha = "uz"
-                ischange = false
-            } else {
-                binding.imguzb.setImageResource(R.drawable.rus)
-                binding.tvuzb.setText("Russian")
-
-                binding.imgrussian.setImageResource(R.drawable.uzb)
-                binding.tvrussian.setText("Uzbek")
-                binding.tvappbar.text = "Uzbek to Russian"
-
-                dan = "uz"
-                gacha = "ru"
-                ischange = true
-            }
-
-        }
-    }
-
     private fun iconfunctions() {
         binding.imgtrash.setOnClickListener {
-            binding.edSentences.text.clear()
+            binding.edSentences.text = ""
             binding.tvResultTranslate.text = ""
         }
         binding.imgcopy.setOnClickListener {
@@ -141,6 +108,34 @@ class TranslateFragment : Fragment() {
             )
             clipboard.setPrimaryClip(clip)
             Toast.makeText(requireContext(), "Copied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun changeLanguage() {
+        var ischange = false
+        binding.imgchange.setOnClickListener {
+            if (ischange) {
+                binding.imguzb.setImageResource(R.drawable.uzb)
+                binding.tvuzb.setText("Uzbek")
+
+                binding.imgrussian.setImageResource(R.drawable.rus)
+                binding.tvrussian.setText("Russian")
+
+                dan = "ru"
+                gacha = "uz"
+                ischange = false
+            } else {
+                binding.imguzb.setImageResource(R.drawable.rus)
+                binding.tvuzb.setText("Russian")
+
+                binding.imgrussian.setImageResource(R.drawable.uzb)
+                binding.tvrussian.setText("Uzbek")
+
+                dan = "uz"
+                gacha = "ru"
+                ischange = true
+            }
+
         }
     }
 

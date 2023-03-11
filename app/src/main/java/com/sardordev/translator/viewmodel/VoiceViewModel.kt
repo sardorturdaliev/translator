@@ -2,7 +2,6 @@ package com.sardordev.translator.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sardordev.translator.data.entity.SavedWords
 import com.sardordev.translator.data.model.BodyTranslate
 import com.sardordev.translator.domain.apprepository.AppRepository
 import com.sardordev.translator.utils.ResponseEvent
@@ -14,8 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TranslateWordViewModel @Inject constructor(private val appRepository: AppRepository) :
-    ViewModel() {
+class VoiceViewModel @Inject constructor(private val appRepository: AppRepository) : ViewModel() {
     private val _wordsobserver = MutableStateFlow<UiEvent>(UiEvent.Empty)
     val wordobserver: StateFlow<UiEvent> get() = _wordsobserver
 
@@ -34,15 +32,5 @@ class TranslateWordViewModel @Inject constructor(private val appRepository: AppR
             }
         }
     }
-
-
-    fun insertData(savedWords: SavedWords) {
-        appRepository.insertSaved(savedWords)
-    }
-
-
-
-
-
 
 }

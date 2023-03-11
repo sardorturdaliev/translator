@@ -37,5 +37,9 @@ class AppRepositoryImp @Inject constructor(
         return dataBaseSaved.getSavedDao().getAllSaved()
     }
 
+    override fun deleteAll() {
+        dataBaseSaved.getSavedDao().deleteAll()
+    }
+
 
 }

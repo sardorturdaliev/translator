@@ -12,10 +12,8 @@ import javax.inject.Inject
 class SavedViewModel @Inject constructor(private val appRepository: AppRepository) : ViewModel() {
     val getSavedWords: LiveData<List<SavedWords>> = appRepository.getAllWords()
 
-
-
-    fun insertData(savedWords: SavedWords) {
-        appRepository.insertSaved(savedWords)
+    fun deleteAllItems(){
+        appRepository.deleteAll()
     }
 
 
